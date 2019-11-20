@@ -13,10 +13,10 @@ import java.util.List;
  *      https://en.wikipedia.org/wiki/Quadtree
  *
  * @author Sean Strout @ RIT
- * @author YOUR NAME HERE
+ * @author Danilo Sosa
  */
 public class QTree {
-    /** the value of a node that indicates it is spplit into 4 sub-regions */
+    /** the value of a node that indicates it is split into 4 sub-regions */
     public final static int QUAD_SPLIT = -1;
 
     /** the root node in the tree */
@@ -92,7 +92,15 @@ public class QTree {
      * compressed image
      */
     private QTNode parse(List<Integer> values) throws QTException {
-        // TODO
+        for (int i = 0; i < values.size(); i++) {
+            int temp = values.get(i);
+            if (temp != this.QUAD_SPLIT){
+                return new QTNode(temp);
+            }else{
+                return new QTNode(this.QUAD_SPLIT, this.parse( values.subList(i + 1, values.size())), this.parse( values.subList(i + 2, values.size())),
+                        this.parse( values.subList(i + 3, values.size())), this.parse( values.subList(i + 4, values.size())));
+            }
+        }
         return null;
     }
 
