@@ -166,7 +166,13 @@ public class QTree {
      * @throws IOException if there are issues with the writer
      */
     private void write(QTNode node, BufferedWriter writer) throws IOException {
-        // TODO
+        String values = preorder(this.root);
+        String[] list = values.split(" ");
+        for (int i = 0; i < list.length; i++) {
+            writer.write(list[i] + "\n");
+            this.compressedSize++;
+        }
+
     }
 
     /**
@@ -179,7 +185,11 @@ public class QTree {
      * @throws QTException if the file has not been compressed yet
      */
     public void write(String outFile) throws IOException, QTException {
-        // TODO
+        FileWriter fw = new FileWriter(outFile);
+        BufferedWriter bw = new BufferedWriter(fw);
+        bw.write(String.valueOf(this.getRawSize()) + " \n");
+        write(this.root, bw);
+        bw.close();
     }
 
     /**
@@ -286,7 +296,7 @@ public class QTree {
      */
     private String preorder(QTNode node) {
         if (node != null){
-            this.compressedSize++;
+            //this.compressedSize++;
             return node.getVal() + " " + preorder(node.getUpperLeft()) +  preorder(node.getUpperRight())
                     + preorder(node.getLowerLeft()) + preorder(node.getLowerRight()) ;
         }
