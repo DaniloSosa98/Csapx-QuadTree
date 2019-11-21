@@ -1,4 +1,7 @@
+import com.sun.jdi.IntegerValue;
+
 import java.io.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -189,8 +192,16 @@ public class QTree {
      * @return whether the region can be compressed or not
      */
     private boolean canCompressBlock(Coordinate start, int size) {
-        // TODO
-        return false;
+        int val = getImage()[start.getRow()][start.getCol()];
+
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                if(getImage()[start.getRow()+i][start.getCol()+j] != val){
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     /**
@@ -225,7 +236,31 @@ public class QTree {
      * @throws IOException if there are issues working with the file
      */
     public void compress(String inputFile) throws IOException {
-        // TODO
+        List<Integer> pixels = new ArrayList();
+        FileReader fr = new FileReader(inputFile);
+        BufferedReader br = new BufferedReader(fr);
+
+        String current;
+
+        while((current = br.readLine()) != null){
+            int value = Integer.valueOf(current);
+            pixels.add(value);
+        }
+
+        br.close();
+
+        this.rawSize = pixels.size();
+        this.DIM = (int) Math.sqrt(this.getRawSize());
+        this.image = new int[getDim()][getDim()];
+        int index = 0;
+        for (int i = 0; i < this.getDim(); i++) {
+            for (int j = 0; j < this.getDim(); j++) {
+                this.image[i][j] = pixels.get(index++);
+            }
+        }
+
+        Coordinate start = new Coordinate(0,0);
+        this.compress(start, getDim());
     }
 
     /**
