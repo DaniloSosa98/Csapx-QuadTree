@@ -95,16 +95,16 @@ public class QTree {
      * compressed image
      */
     private QTNode parse(List<Integer> values) throws QTException {
-        for (int i = 0; i < values.size(); i++) {
-            int temp = values.get(i);
-            if (temp != this.QUAD_SPLIT){
-                return new QTNode(temp);
-            }else{
-                return new QTNode(this.QUAD_SPLIT, this.parse( values.subList(i + 1, values.size())), this.parse( values.subList(i + 2, values.size())),
-                        this.parse( values.subList(i + 3, values.size())), this.parse( values.subList(i + 4, values.size())));
-            }
+        int val = values.remove(0);
+        if(val != -1){
+            return new QTNode(val);
+        }else{
+            QTNode ul = parse(values);
+            QTNode ur = parse(values);
+            QTNode ll = parse(values);
+            QTNode lr = parse(values);
+            return new QTNode(val, ul, ur, ll, lr);
         }
-        return null;
     }
 
     /**
@@ -134,7 +134,7 @@ public class QTree {
      * @param start the starting coordinate this row represents in the image
      */
     private void uncompress(QTNode node, int size, Coordinate start) {
-        // TODO
+
     }
 
     /**
@@ -153,7 +153,25 @@ public class QTree {
      * @throws QTException if there are issues parsing the data in the file
      */
     public void uncompress(String filename) throws IOException, QTException {
-        // TODO
+        List<Integer> pixels = new ArrayList();
+        FileReader fr = new FileReader(filename);
+        BufferedReader br = new BufferedReader(fr);
+
+        String current;
+
+        while((current = br.readLine()) != null){
+            int value = Integer.valueOf(current);
+            pixels.add(value);
+        }
+
+        br.close();
+        this.DIM = (int)Math.sqrt(Integer.valueOf(pixels.get(0)));
+        this.image = new int[getDim()][getDim()];
+        pixels.remove(0);
+        Coordinate start = new Coordinate(0,0);
+        this.root = parse(pixels);
+        uncompress(this.root, getDim(), start);
+        //this.root = this.compress(start, getDim());
     }
 
     /**
@@ -232,13 +250,7 @@ public class QTree {
      * @return a node containing the compression information for the region
      */
     private QTNode compress(Coordinate start, int size) throws QTException{
-        //List<Integer> region = new ArrayList();
         if(canCompressBlock(start, size) || size == 1){
-            /*for (int i = 0; i < size; i++) {
-                for (int j = 0; j < size; j++) {
-                    region.add(getImage()[start.getRow() + i][start.getCol() + j]);
-                }
-            }*/
             return new QTNode(getImage()[start.getRow()][start.getCol()]);
         }else{
             return new QTNode(QUAD_SPLIT, compress(start, (size/2)),
@@ -296,7 +308,6 @@ public class QTree {
      */
     private String preorder(QTNode node) {
         if (node != null){
-            //this.compressedSize++;
             return node.getVal() + " " + preorder(node.getUpperLeft()) +  preorder(node.getUpperRight())
                     + preorder(node.getLowerLeft()) + preorder(node.getLowerRight()) ;
         }
