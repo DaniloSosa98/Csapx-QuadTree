@@ -221,9 +221,21 @@ public class QTree {
      * @param size the size this region represents
      * @return a node containing the compression information for the region
      */
-    private QTNode compress(Coordinate start, int size) {
-        // TODO
-        return null;
+    private QTNode compress(Coordinate start, int size) throws QTException{
+        //List<Integer> region = new ArrayList();
+        if(canCompressBlock(start, size) || size == 1){
+            /*for (int i = 0; i < size; i++) {
+                for (int j = 0; j < size; j++) {
+                    region.add(getImage()[start.getRow() + i][start.getCol() + j]);
+                }
+            }*/
+            return new QTNode(getImage()[start.getRow()][start.getCol()]);
+        }else{
+            return new QTNode(QUAD_SPLIT, compress(start, (size/2)),
+                    compress(new Coordinate(start.getRow(), start.getCol() + (size/2)), (size/2)),
+                    compress(new Coordinate (start.getRow() + (size/2) , start.getCol()) , (size/2)),
+                    compress(new Coordinate(start.getRow() + (size/2) , start.getCol() + (size/2)), (size/2)));
+        }
     }
 
     /**
@@ -235,7 +247,7 @@ public class QTree {
      * @param inputFile the raw image file name
      * @throws IOException if there are issues working with the file
      */
-    public void compress(String inputFile) throws IOException {
+    public void compress(String inputFile) throws IOException, QTException {
         List<Integer> pixels = new ArrayList();
         FileReader fr = new FileReader(inputFile);
         BufferedReader br = new BufferedReader(fr);
@@ -248,7 +260,6 @@ public class QTree {
         }
 
         br.close();
-
         this.rawSize = pixels.size();
         this.DIM = (int) Math.sqrt(this.getRawSize());
         this.image = new int[getDim()][getDim()];
@@ -260,7 +271,8 @@ public class QTree {
         }
 
         Coordinate start = new Coordinate(0,0);
-        this.compress(start, getDim());
+        this.compressedSize++;
+        this.root = this.compress(start, getDim());
     }
 
     /**
@@ -273,7 +285,11 @@ public class QTree {
      * @return the string of the node
      */
     private String preorder(QTNode node) {
-        // TODO
+        if (node != null){
+            this.compressedSize++;
+            return node.getVal() + " " + preorder(node.getUpperLeft()) +  preorder(node.getUpperRight())
+                    + preorder(node.getLowerLeft()) + preorder(node.getLowerRight()) ;
+        }
         return "";
     }
 
