@@ -94,6 +94,7 @@ public class QTree {
      * @throws QTException if there are not enough values in the
      * compressed image
      */
+    //you gave us this method
     private QTNode parse(List<Integer> values) throws QTException {
         int val = values.remove(0);
         if(val != -1){
@@ -134,7 +135,20 @@ public class QTree {
      * @param start the starting coordinate this row represents in the image
      */
     private void uncompress(QTNode node, int size, Coordinate start) {
-
+        //if value is a grayscale draw it on the whole region
+        if(node.getVal() != -1){
+            for (int i = 0; i < size; i++) {
+                for (int j = 0; j < size; j++) {
+                    this.getImage()[start.getRow() + i][start.getCol() +j] = node.getVal();
+                }
+            }
+        //if not, recursive call through the tree with the required offset and size
+        }else{
+            uncompress(node.getUpperLeft(), (size/2), start);
+            uncompress(node.getUpperRight(), (size/2), new Coordinate(start.getRow(), start.getCol() + (size/2)));
+            uncompress(node.getLowerLeft(), (size/2), new Coordinate(start.getRow() + (size/2), start.getCol()));
+            uncompress(node.getLowerRight(), (size/2), new Coordinate(start.getRow() + (size/2), start.getCol() + (size/2)));
+        }
     }
 
     /**
@@ -153,25 +167,30 @@ public class QTree {
      * @throws QTException if there are issues parsing the data in the file
      */
     public void uncompress(String filename) throws IOException, QTException {
+        //list for my read values
         List<Integer> pixels = new ArrayList();
         FileReader fr = new FileReader(filename);
         BufferedReader br = new BufferedReader(fr);
 
         String current;
-
+        //go through the file and add them to the list
         while((current = br.readLine()) != null){
             int value = Integer.valueOf(current);
             pixels.add(value);
         }
 
         br.close();
+        //define dimensions based on the first line of the file
         this.DIM = (int)Math.sqrt(Integer.valueOf(pixels.get(0)));
+        //define dimensions of the image
         this.image = new int[getDim()][getDim()];
+        //remove 'root' from compressed file
         pixels.remove(0);
+        //begin the uncompressing process
         Coordinate start = new Coordinate(0,0);
         this.root = parse(pixels);
         uncompress(this.root, getDim(), start);
-        //this.root = this.compress(start, getDim());
+
     }
 
     /**
@@ -221,7 +240,7 @@ public class QTree {
      */
     private boolean canCompressBlock(Coordinate start, int size) {
         int val = getImage()[start.getRow()][start.getCol()];
-
+        //check if every value in the region is the same
         for (int i = 0; i < size; i++) {
             for (int j = 0; j < size; j++) {
                 if(getImage()[start.getRow()+i][start.getCol()+j] != val){
@@ -250,8 +269,10 @@ public class QTree {
      * @return a node containing the compression information for the region
      */
     private QTNode compress(Coordinate start, int size) throws QTException{
+        //if it can be compressed or size = 1, compress the region
         if(canCompressBlock(start, size) || size == 1){
             return new QTNode(getImage()[start.getRow()][start.getCol()]);
+        //if not, recursive call until region can be compressed
         }else{
             return new QTNode(QUAD_SPLIT, compress(start, (size/2)),
                     compress(new Coordinate(start.getRow(), start.getCol() + (size/2)), (size/2)),
@@ -282,16 +303,20 @@ public class QTree {
         }
 
         br.close();
+        //size from amount of lines
         this.rawSize = pixels.size();
+        //dim is the square root of the size
         this.DIM = (int) Math.sqrt(this.getRawSize());
+        //define image
         this.image = new int[getDim()][getDim()];
+        //fill up image (I know it is not necessary but I was trying some things out)
         int index = 0;
         for (int i = 0; i < this.getDim(); i++) {
             for (int j = 0; j < this.getDim(); j++) {
                 this.image[i][j] = pixels.get(index++);
             }
         }
-
+        //begin compression process
         Coordinate start = new Coordinate(0,0);
         this.compressedSize++;
         this.root = this.compress(start, getDim());
